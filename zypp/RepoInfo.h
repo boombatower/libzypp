@@ -277,29 +277,63 @@ namespace zypp
       void setPackagesPath( const Pathname &path );
 
 
-      /** Whether default signature checking should be performed for this repo.
+      /** \name Repository gpgchecks
+       * How signature checking should be performed for this repo.
        *
-       * This will turn on \ref repoGpgCheck for signed repos and
-       * \ref pkgGpgCheck for unsigned ones or if \ref repoGpgCheck is off.
+       * The values are computed based in the settings of \c gpgcheck, \c repo_gpgcheck
+       * end \c pkg_gpgcheck in \c zypp.conf. Explicitly setting these values in the
+       * repositories \a .repo file will overwrite the defaults from \c zypp.conf.
        *
-       * The default is \c true but may be overwritten by \c zypp.conf or a \ref .repo file.
+       * If \ref gpgCheck is \c on (the default) we will either check the signature
+       * of repo metadata (packages are secured via checksum in the metadata), or
+       * the signature of an rpm package to install if it's repo metadata are
+       * not signed or not checked. If \ref gpgCheck is \c off, no checks are performed.
+       *
+       * The default behavior can be altered by explicitly setting \ref repoGpgCheck and/or
+       * \ref pkgGpgCheck to perform those checks always (\c on) or never (\c off).
+       *
+       * \note While \ref gpgCheck is \c on, the \ref pkgGpgCheck is enforced if the
+       * repo signature was not verified (\ref repoGpgCheck is \c off or the repo not signed).
+       * It is not possible to disable all checks while \ref gpgCheck is \c on.
+       *
+       * \code
+       *  r: check repo signature, unsigned repos enforce p
+       *  R: check repo signature is mandatory, confirm unsigned repos
+       *
+       *  p: check package signature, if repo was not checked
+       *  P: check package signature always
+       * (): gpgcheck overrules explicit pkg_gpgcheck config value
+       *                    pkg_
+       * gpgcheck1|     *       0       1
+       * -----------------------------------
+       *         *|     r/p     R/(p)   r/P
+       * repo_   0|       P       (P)     P
+       *         1|     R/p     R/(p)   R/P
+       *
+       *                    pkg_
+       * gpgcheck0|     *       0       1
+       * -----------------------------------
+       *         *|                       P
+       * repo_   0|                       P
+       *         1|     R       R       R/P
+       * \endcode
        */
+      //@{
+      /** Whether default signature checking should be performed. */
       bool gpgCheck() const;
       /** Set the value for \ref gpgCheck (or \c indeterminate to use the default). */
       void setGpgCheck( TriBool value_r );
       /** \overload \deprecated legacy and for squid */
       void setGpgCheck( bool value_r );
 
-      /** Whether the signature of repo metadata should be checked for this repo.
-       * The default is defined by \ref gpgCheck but may be overwritten by \c zypp.conf or a \ref .repo file.
-       */
+      /** Whether the signature of repo metadata should be checked for this repo. */
       bool repoGpgCheck() const;
+      /** Mandatory check (\ref repoGpgCheck is \c on) must ask to confirm using unsigned repos. */
+      bool repoGpgCheckIsMandatory() const;
       /** Set the value for \ref repoGpgCheck (or \c indeterminate to use the default). */
       void setRepoGpgCheck( TriBool value_r );
 
-      /** Whether the signature of rpm packages should be checked for this repo.
-       * The default is defined by \ref gpgCheck but may be overwritten by \c zypp.conf or a \ref .repo file.
-       */
+      /** Whether the signature of rpm packages should be checked for this repo. */
       bool pkgGpgCheck() const;
       /** Set the value for \ref pkgGpgCheck (or \c indeterminate to use the default). */
       void setPkgGpgCheck( TriBool value_r );
@@ -310,6 +344,7 @@ namespace zypp
       TriBool validRepoSignature() const;
       /** Set the value for \ref validRepoSignature (or \c indeterminate if unsigned). */
       void setValidRepoSignature( TriBool value_r );
+      //@}
 
 
       /** Whether gpgkey URLs are defined */
